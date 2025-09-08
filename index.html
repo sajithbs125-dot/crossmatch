@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Blood Bank Compatibility Report</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 1rem;
+      background: #fff;
+      color: #333;
+    }
+    .form-container, #reportSection {
+      max-width: 600px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    h3 {
+      color: #c62828;
+      margin-bottom: 1rem;
+    }
+    .form-section {
+      margin-bottom: 1.2rem;
+      border: 1px solid #ddd;
+      border-radius: 7px;
+      padding: 1rem;
+      background: #fafafa;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      font-size: 1rem;
+    }
+    input[type="text"], input[type="date"], select {
+      width: 100%;
+      padding: 0.7rem 0.8rem;
+      margin-bottom: 0.9rem;
+      font-size: 1.07rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-weight: 700;
+      box-sizing: border-box;
+    }
+    .blood-unit {
+      border: 1px solid #ccc;
+      border-radius: 7px;
+      background: #fff;
+      padding: 1rem;
+      margin-bottom: 1.2rem;
+    }
+    .unit-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.8rem;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #b71c1c;
+    }
+    button {
+      background: #c62828;
+      color: white;
+      border: none;
+      padding: 0.7rem 1.1rem;
+      font-weight: 700;
+      font-size: 1.05rem;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+    button:hover {
+      background: #b71c1c;
+    }
+    .add-unit-btn {
+      background: #2e7d32;
+      width: 100%;
+      margin-top: 1rem;
+    }
+    .add-unit-btn:hover {
+      background: #1b5e20;
+    }
+    .print-btn {
+      width: 100%;
+      margin-top: 1.2rem;
+      background: #1565c0;
+    }
+    .print-btn:hover {
+      background: #0d47a1;
+    }
+    #qrCodeContainer {
+      width: 70px;
+      height: 70px;
+      margin-top: 0.8rem;
+      margin-bottom: 0.7rem;
+      border: 1px solid #ccc;
+      background: #fff;
+      display: block;
+    }
+    #reportSection {
+      display: none;
+      border: 2px solid #c62828;
+      border-radius: 7px;
+      margin-top: 2rem;
+      padding: 1rem;
+      background: #fff;
+    }
+    .report-header {
+      text-align: center;
+      font-size: 1.2rem;
+      color: #c62828;
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+    table.report-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.99rem;
+      margin-bottom: 1.2rem;
+    }
+    table.report-table th, table.report-table td {
+      border: 1px solid #ddd;
+      padding: 0.5rem 0.1rem;
+      text-align: center;
+      font-weight: 400;
+    }
+    table.report-table th {
+      background: #f9f9f9;
+      color: #c62828;
+      font-weight: 700;
+    }
+    @media (max-width: 480px) {
+      .form-container, #reportSection {padding: 0;}
+      input, select, button {font-size: 1.08rem; padding: 1rem;}
+      .unit-header { font-size: 1rem; }
+      .form-section { padding: 0.7rem; margin-bottom: 0.7rem;}
+      #qrCodeContainer { margin: 0.6rem auto 1rem auto; }
+      table.report-table th, table.report-table td {font-size: 0.96rem; padding: 0.37rem 0.08rem;}
+    }
+  </style>
+</head>
+<body>
+
+<div class="form-container">
+  <div class="form-section">
+    <h3>Patient Information</h3>
+    <label>Patient's Name <input type="text" id="patientName" placeholder="Full name" /></label>
+    <label>Age <input type="text" id="patientAge" placeholder="Age" /></label>
+    <label>Gender
+      <select id="patientGender">
+        <option value="">Select Gender</option>
+        <option value="MALE">MALE</option>
+        <option value="FEMALE">FEMALE</option>
+        <option value="OTHER">OTHER</option>
+      </select>
+    </label>
+    <label>Blood Group & Rh
+      <select id="patientBloodGroup">
+        <option value="">Select Blood Group</option>
+        <option value="A POSITIVE">A POSITIVE</option>
+        <option value="A NEGATIVE">A NEGATIVE</option>
+        <option value="B POSITIVE">B POSITIVE</option>
+        <option value="B NEGATIVE">B NEGATIVE</option>
+        <option value="AB POSITIVE">AB POSITIVE</option>
+        <option value="AB NEGATIVE">AB NEGATIVE</option>
+        <option value="O POSITIVE">O POSITIVE</option>
+        <option value="O NEGATIVE">O NEGATIVE</option>
+      </select>
+    </label>
+    <label>Ward/Unit <input type="text" id="patientWard" placeholder="Ward/Unit" /></label>
+    <label>Patient ID/CR No. <input type="text" id="patientID" placeholder="Patient ID" /></label>
+  </div>
+  <div class="form-section">
+    <h3>Blood Unit Information</h3>
+    <div id="bloodUnits">
+      <div class="blood-unit" id="unit1">
+        <div class="unit-header">Blood Unit #1 <button class="remove-unit" onclick="removeUnit(1)">Remove</button></div>
+        <label>Cross Match No. <input type="text" id="crossMatchNo1" placeholder="Cross Match No." /></label>
+        <label>Bag No. <input type="text" id="bagNo1" placeholder="Bag No." /></label>
+        <label>Unit Blood Group & Rh
+          <select id="unitBloodGroup1" class="unit-blood-group"></select>
+        </label>
+        <label>Volume (ml) <input type="text" id="volume1" placeholder="Volume in ml" /></label>
+        <label>Date of Collection <input type="date" id="collectionDate1" /></label>
+        <label>Date of Expiry <input type="date" id="expiryDate1" /></label>
+      </div>
+    </div>
+    <button class="add-unit-btn" onclick="addUnit()">+ Add Another Blood Unit</button>
+  </div>
+  <div class="form-section">
+    <label>Reservation Till <input type="date" id="reservationDate" /></label>
+  </div>
+  <div class="form-section">
+    <label>Cross Match Done By:
+      <select id="technicianSelect">
+        <option value="SAJITH B.S.">SAJITH B.S.</option>
+        <option value="SATHEESH MANI">SATHEESH MANI</option>
+      </select>
+    </label>
+  </div>
+  <button class="print-btn" onclick="generateAndPrintReport()">Print Report</button>
+</div>
+
+<div id="reportSection">
+  <div class="report-header">COMPATIBILITY REPORT</div>
+  <div>
+    <strong>Patient's Name:</strong> <span id="reportPatientName"></span><br>
+    <strong>Age:</strong> <span id="reportPatientAge"></span><br>
+    <strong>Gender:</strong> <span id="reportPatientGender"></span><br>
+    <strong>Blood Group & Rh:</strong> <span id="reportPatientBloodGroup"></span><br>
+    <strong>Ward/Unit:</strong> <span id="reportPatientWard"></span><br>
+    <strong>Patient ID/CR No.:</strong> <span id="reportPatientID"></span><br>
+    <div id="qrCodeContainer"></div>
+  </div>
+  <table class="report-table">
+    <thead>
+      <tr>
+        <th>Sr No</th><th>Cross Match No</th><th>Bag No</th><th>Blood Group & Rh</th>
+        <th>Vol. in ml.</th><th>Date of Collection</th><th>Date of Expiry</th>
+        <th>Compatibility</th><th>Date & Time Of Issue</th><th>Issued By</th>
+      </tr>
+    </thead>
+    <tbody id="reportBloodUnits">
+    </tbody>
+  </table>
+  <div><strong>Reservation is valid until:</strong> <span id="reportReservationDate"></span></div>
+</div>
+
+<script>
+  let unitCount = 1;
+  const bloodGroupsOptions = ['A POSITIVE','A NEGATIVE','B POSITIVE','B NEGATIVE','AB POSITIVE','AB NEGATIVE','O POSITIVE','O NEGATIVE'];
+  window.onload = () => {
+    // Set default reservation date
+    const reservationDateEl = document.getElementById('reservationDate');
+    const today = new Date();
+    today.setDate(today.getDate() + 2);
+    reservationDateEl.valueAsDate = today;
+    fillBloodGroupOptions(document.getElementById('unitBloodGroup1'));
+    document.getElementById('patientBloodGroup').addEventListener('change', (e) => {
+      const val = e.target.value;
+      document.querySelectorAll('.unit-blood-group').forEach(el => el.value = val);
+    });
+  };
+  function fillBloodGroupOptions(select) {
+    select.innerHTML = bloodGroupsOptions.map(bg => `<option value="${bg}">${bg}</option>`).join('');
+  }
+  function addUnit() {
+    unitCount++;
+    const bloodUnitsDiv = document.getElementById('bloodUnits');
+    const patientBloodGroupVal = document.getElementById('patientBloodGroup').value;
+    const unitDiv = document.createElement('div');
+    unitDiv.className = 'blood-unit';
+    unitDiv.id = `unit${unitCount}`;
+    unitDiv.innerHTML = `
+      <div class="unit-header">Blood Unit #${unitCount} <button class="remove-unit" onclick="removeUnit(${unitCount})">Remove</button></div>
+      <label>Cross Match No. <input type="text" id="crossMatchNo${unitCount}" placeholder="Cross Match No." /></label>
+      <label>Bag No. <input type="text" id="bagNo${unitCount}" placeholder="Bag No." /></label>
+      <label>Unit Blood Group & Rh
+        <select id="unitBloodGroup${unitCount}" class="unit-blood-group"></select>
+      </label>
+      <label>Volume (ml) <input type="text" id="volume${unitCount}" placeholder="Volume in ml" /></label>
+      <label>Date of Collection <input type="date" id="collectionDate${unitCount}" /></label>
+      <label>Date of Expiry <input type="date" id="expiryDate${unitCount}" /></label>
+    `;
+    bloodUnitsDiv.appendChild(unitDiv);
+    fillBloodGroupOptions(document.getElementById(`unitBloodGroup${unitCount}`));
+    if(patientBloodGroupVal) document.getElementById(`unitBloodGroup${unitCount}`).value = patientBloodGroupVal;
+  }
+  function removeUnit(id) {
+    if(unitCount > 1) {
+      const el = document.getElementById(`unit${id}`);
+      if(el) el.remove();
+      unitCount--;
+      // Renumber remaining units
+      const units = document.querySelectorAll('.blood-unit');
+      units.forEach((unit, index) => {
+        const newId = index + 1;
+        unit.id = `unit${newId}`;
+        unit.querySelector('.unit-header').innerHTML = `Blood Unit #${newId} <button class="remove-unit" onclick="removeUnit(${newId})">Remove</button>`;
+        ['crossMatchNo','bagNo','unitBloodGroup','volume','collectionDate','expiryDate'].forEach(field => {
+          const input = unit.querySelector(`#${field}${newId+1}, #${field}${newId}`);
+          if(input) input.id = `${field}${newId}`;
+        });
+      });
+    }
+  }
+  function formatDate(date, short = false) {
+    const pad = (num) => num.toString().padStart(2, '0');
+    if(short) {
+      const day = pad(date.getDate());
+      const month = date.toLocaleString('default', { month: 'short' }).toUpperCase();
+      const year = date.getFullYear().toString().slice(-2);
+      return `${day}-${month}-${year}`;
+    }
+    const day = pad(date.getDate());
+    const month = pad(date.getMonth() + 1);
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+  function generateReport() {
+    const patientFields = ['patientName','patientAge','patientGender','patientBloodGroup','patientWard','patientID'];
+    const patientData = {};
+    patientFields.forEach(id => {
+      patientData[id] = document.getElementById(id).value || 'Not Provided';
+    });
+    const technicianName = document.getElementById('technicianSelect').value;
+    document.getElementById('reportPatientName').textContent = patientData.patientName;
+    document.getElementById('reportPatientAge').textContent = patientData.patientAge !== 'Not Provided' ? patientData.patientAge + ' Yrs' : 'Not Provided';
+    document.getElementById('reportPatientGender').textContent = patientData.patientGender;
+    document.getElementById('reportPatientBloodGroup').textContent = patientData.patientBloodGroup ? `'${patientData.patientBloodGroup.split(' ')[0]}' ${patientData.patientBloodGroup.split(' ')[1]}` : 'Not Provided';
+    document.getElementById('reportPatientWard').textContent = patientData.patientWard;
+    document.getElementById('reportPatientID').textContent = patientData.patientID;
+    const reportTableBody = document.getElementById('reportBloodUnits');
+    reportTableBody.innerHTML = '';
+    let qrLines = [];
+    for(let i = 1; i <= unitCount; i++) {
+      const crossMatchNo = document.getElementById(`crossMatchNo${i}`)?.value || 'Not Provided';
+      const bagNo = document.getElementById(`bagNo${i}`)?.value || 'Not Provided';
+      const bg = document.getElementById(`unitBloodGroup${i}`)?.value || 'Not Provided';
+      const vol = document.getElementById(`volume${i}`)?.value || 'Not Provided';
+      let collDate = document.getElementById(`collectionDate${i}`)?.value;
+      collDate = collDate ? formatDate(new Date(collDate), true) : 'Not Provided';
+      let expDate = document.getElementById(`expiryDate${i}`)?.value;
+      expDate = expDate ? formatDate(new Date(expDate), true) : 'Not Provided';
+      qrLines.push(`Bag ${i}:  Bag No: ${bagNo}, Group: ${bg}, Collection: ${collDate}, Expiry: ${expDate}, Compatible`);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${i}</td>
+        <td>${crossMatchNo}</td>
+        <td>${bagNo}</td>
+        <td>${bg !== 'Not Provided' ? `'${bg.split(' ')[0]}' ${bg.split(' ')[1]}` : 'Not Provided'}</td>
+        <td>${vol !== 'Not Provided' ? vol + ' ml.' : 'Not Provided'}</td>
+        <td>${collDate}</td>
+        <td>${expDate}</td>
+        <td>COMPATIBLE</td>
+        <td></td>
+        <td></td>
+      `;
+      reportTableBody.appendChild(tr);
+    }
+    const reservationVal = document.getElementById('reservationDate').value;
+    document.getElementById('reportReservationDate').textContent = reservationVal ? formatDate(new Date(reservationVal)) : 'Not Provided';
+    document.getElementById('reportSection').style.display = 'block';
+    const qrData =
+      `Name: ${patientData.patientName}\n` +
+      `Age: ${patientData.patientAge} Yrs\n` +
+      `Gender: ${patientData.patientGender}\n` +
+      `Blood Group: ${patientData.patientBloodGroup}\n` +
+      `CR No.: ${patientData.patientID}\n` +
+      `Blood Units:\n${qrLines.join('\n')}\n`;
+    const qrContainer = document.getElementById('qrCodeContainer');
+    qrContainer.innerHTML = '';
+    new QRCode(qrContainer, { text: qrData, width: 70, height: 70, correctLevel: QRCode.CorrectLevel.M });
+    return true;
+  }
+  function generateAndPrintReport() {
+    if(generateReport()) setTimeout(() => window.print(), 500);
+  }
+</script>
+</body>
+</html>
